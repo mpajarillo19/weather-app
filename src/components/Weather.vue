@@ -11,6 +11,7 @@ const showDropdown = ref(false)
 const weatherData = ref(null)
 const loading = ref(false)
 const error = ref(null)
+const hourlyForecast = ref([])
 
 const handleSearch = debounce(async () => {
   if (searchQuery.value.length < 3) {
@@ -30,6 +31,25 @@ const handleSearch = debounce(async () => {
   }
 }, 300)
 
+const getHourlyForecast = async (lat, lon) => {
+  try {
+    const response = await fetch(
+      `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${API_KEY}`
+    )
+    const data = await response.json()
+    hourlyForecast.value = data.list.slice(0, 8) // Get next 24 hours (3-hour steps)
+  } catch (e) {
+    console.error('Error fetching hourly forecast:', e)
+  }
+}
+
+const formatHour = (timestamp) => {
+  return new Date(timestamp * 1000).toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    hour12: true
+  })
+}
+
 const selectCity = async (city) => {
   searchQuery.value = city.name
   showDropdown.value = false
@@ -37,15 +57,16 @@ const selectCity = async (city) => {
   error.value = null
 
   try {
-    const response = await fetch(
-      `${API_URL}?lat=${city.lat}&lon=${city.lon}&units=metric&appid=${API_KEY}`
-    )
+    const [weatherResponse] = await Promise.all([
+      fetch(`${API_URL}?lat=${city.lat}&lon=${city.lon}&units=metric&appid=${API_KEY}`),
+      getHourlyForecast(city.lat, city.lon)
+    ])
 
-    if (!response.ok) {
+    if (!weatherResponse.ok) {
       throw new Error('Failed to fetch weather data')
     }
 
-    weatherData.value = await response.json()
+    weatherData.value = await weatherResponse.json()
   } catch (e) {
     error.value = e.message
     weatherData.value = null
@@ -54,7 +75,6 @@ const selectCity = async (city) => {
   }
 }
 
-// Click outside to close dropdown
 const handleClickOutside = (event) => {
   if (!event.target.closest('.search-container')) {
     showDropdown.value = false
@@ -118,7 +138,8 @@ onUnmounted(() => {
             <h2 class="text-4xl font-bold">{{ weatherData.name }}</h2>
             <p class="text-white/70">{{ new Date().toLocaleDateString('en-US', {
               weekday: 'long', month: 'long', day:
-              'numeric' }) }}</p>
+                'numeric'
+            }) }}</p>
           </div>
           <div class="text-6xl font-bold">{{ Math.round(weatherData.main.temp) }}°</div>
         </div>
@@ -154,7 +175,57 @@ onUnmounted(() => {
             <p class="text-3xl font-bold">{{ weatherData.wind.speed }} m/s</p>
           </div>
         </div>
+
+        <!-- Hourly Forecast -->
+        <!-- Update the hourly forecast section in your template -->
+        <div class="mt-8">
+          <h3 class="text-xl font-semibold text-white mb-4">Hourly Forecast</h3>
+          <div class="overflow-x-auto">
+            <div class="flex gap-4 pb-4">
+              <div v-for="hour in hourlyForecast" :key="hour.dt"
+                class="flex-shrink-0 bg-sky-600/20 rounded-xl p-4 text-center min-w-[100px]">
+                <div class="text-white/70 mb-2">
+                  {{ formatHour(hour.dt) }}
+                </div>
+                <div class="text-2xl font-bold text-white mb-2">
+                  {{ Math.round(hour.main.temp) }}°
+                </div>
+                <img :src="`https://openweathermap.org/img/wn/${hour.weather[0].icon}.png`"
+                  :alt="hour.weather[0].description" class="w-12 h-12 mx-auto" />
+                <div class="text-sm text-white/70">
+                  {{ hour.weather[0].description }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
 </template>
+
+<style>
+.overflow-x-auto {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+.overflow-x-auto::-webkit-scrollbar {
+  height: 6px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 100vh;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 100vh;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+</style>
