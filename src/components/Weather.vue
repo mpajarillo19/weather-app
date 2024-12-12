@@ -29,7 +29,6 @@ const handleSearch = debounce(async () => {
     searchResults.value = []
   }
 }, 300)
-</script>
 
 const selectCity = async (city) => {
   searchQuery.value = city.name
@@ -119,8 +118,7 @@ onUnmounted(() => {
             <h2 class="text-4xl font-bold">{{ weatherData.name }}</h2>
             <p class="text-white/70">{{ new Date().toLocaleDateString('en-US', {
               weekday: 'long', month: 'long', day:
-                'numeric'
-            }) }}</p>
+              'numeric' }) }}</p>
           </div>
           <div class="text-6xl font-bold">{{ Math.round(weatherData.main.temp) }}°</div>
         </div>
