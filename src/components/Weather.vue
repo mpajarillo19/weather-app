@@ -21,7 +21,7 @@ const handleSearch = debounce(async () => {
 
   try {
     const response = await fetch(
-      `http://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(searchQuery.value)}&limit=5&appid=${API_KEY}`
+      `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(searchQuery.value)}&limit=5&appid=${API_KEY}`
     )
     searchResults.value = await response.json()
     showDropdown.value = true
@@ -29,6 +29,7 @@ const handleSearch = debounce(async () => {
     searchResults.value = []
   }
 }, 300)
+</script>
 
 const selectCity = async (city) => {
   searchQuery.value = city.name
