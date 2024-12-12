@@ -6,8 +6,8 @@ console.log(import.meta.env.VITE_WEATHER_API_KEY)
 
 
 const API_KEY = import.meta.env.VITE_WEATHER_API_KEY
-const API_URL = 'https://api..org/data/2.5/weather'
-openweathermap
+const API_URL = 'https://api.openweathermap.org/data/2.5/weather'
+
 const searchQuery = ref('')
 const searchResults = ref([])
 const showDropdown = ref(false)
